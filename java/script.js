@@ -46,7 +46,7 @@ const count = () => $('#count').textContent = cart.reduce((s, i) => s + i.qty, 0
 
 function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2000) }
 
-const card = p => `<article class="card"><button class="fav" data-fav="${p.id}" aria-label="Marcar como favorita" style="position:absolute;top:8px;left:12px;z-index:2;background:none;border:0;font-size:1.7rem;line-height:1;cursor:pointer;color:#c8452d">${favs.includes(p.id) ? '♥' : '♡'}</button>${p.stock < 1 ? '<span class="tag">Agotado</span>' : ''}
+const card = p => `<article class="card"><button class="fav" data-fav="${p.id}" aria-label="Marcar como favorita" style="position:absolute;top:8px;left:12px;z-index:2;background:none;border:0;font-size:1.7rem;line-height:1;cursor:pointer;color:#ff4fa3">${favs.includes(p.id) ? '♥' : '♡'}</button>${p.stock < 1 ? '<span class="tag">Agotado</span>' : ''}
   <a href="#/producto/${p.id}"><div class="art">${art(p)}</div><h3>${esc(p.name)}</h3></a>
   <p class="clan">${esc(p.serie)}</p><p class="price">${money(p.price)}</p>
   <a class="btn dark" href="#/producto/${p.id}">Ver y elegir</a></article>`;
