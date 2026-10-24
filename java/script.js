@@ -47,11 +47,73 @@ const card = p => `<article class="card">${p.stock < 1 ? '<span class="tag">Agot
   <p class="clan">${esc(p.serie)}</p><p class="price">${money(p.price)}</p>
   <a class="btn dark" href="#/producto/${p.id}">Ver y elegir</a></article>`;
 
+const enCarrito = id => cart.filter(i => i.id == id).reduce((s, i) => s + i.qty, 0);   // unidades de una silla (sumando colores y tamaños)
+
 function addCart(id, color, size, qty){
   const p = products.find(x => x.id == id), k = `${id}|${color}|${size}`, it = cart.find(x => x.k === k);
-  if ((it ? it.qty : 0) + qty > p.stock) { toast('Solo quedan ' + p.stock + ' unidades'); return false }
+  if (enCarrito(id) + qty > p.stock) { toast(p.stock < 1 ? 'Esta silla está agotada' : `Máximo ${p.stock} unidades de esta silla`); return false }
   it ? it.qty += qty : cart.push({k, id:p.id, color, size, qty});
   saveCart(); count(); return true;
+}
+
+/* ---------- Lógica de negocio: validación, stock y pedidos ---------- */
+// El servidor (carpeta "backend") solo se usa al probar en tu PC. En GitHub Pages la tienda funciona igual, sin servidor.
+const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:3000/api' : null;
+let enLinea = false;
+
+async function api(ruta, opciones){
+  const r = await fetch(API + ruta, {headers:{'Content-Type':'application/json'}, ...opciones});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(d.error || 'Error del servidor'), {estado:r.status});
+  return d;
+}
+
+// Trae precio y stock reales del servidor (si está encendido) y ajusta el carrito
+async function sincronizar(){
+  if (!API) return;
+  try {
+    (await api('/productos')).forEach(s => { const p = products.find(x => x.id == s.id); if (p) { p.price = s.price; p.stock = s.stock } });
+    enLinea = true;
+  } catch { enLinea = false }
+  sanearCarrito(); route();
+}
+
+// Quita del carrito sillas que ya no existen y recorta cantidades que superan el stock
+function sanearCarrito(){
+  const antes = JSON.stringify(cart), resto = {};
+  cart = cart.filter(i => products.some(p => p.id == i.id)).map(i => {
+    const p = products.find(x => x.id == i.id);
+    resto[p.id] ??= p.stock;
+    const qty = Math.min(i.qty, resto[p.id]); resto[p.id] -= qty;
+    return {...i, qty};
+  }).filter(i => i.qty > 0);
+  if (JSON.stringify(cart) !== antes) { saveCart(); count(); toast('Ajustamos tu carrito al stock disponible') }
+}
+
+// Reglas del formulario de entrega (el servidor repite las mismas reglas)
+function validar(d){
+  const errores = {};
+  let cel = String(d.celular || '').replace(/[\s-]/g, '');
+  if (cel.length > 9) cel = cel.replace(/^\+?51/, '');
+  if (d.nombre.length < 5 || d.nombre.split(/\s+/).length < 2) errores.nombre = 'Escribe tu nombre y apellido';
+  if (!/^9\d{8}$/.test(cel)) errores.celular = 'El celular debe tener 9 dígitos y empezar con 9';
+  if (d.direccion.length < 10) errores.direccion = 'Escribe una dirección más completa (calle, número y ciudad)';
+  return {errores, celular:cel};
+}
+
+// Registra el pedido en el servidor; si no hay servidor, sigue en modo local
+async function enviarPedido(datos, ls){
+  if (API && enLinea) {
+    try {
+      const items = ls.map(l => ({id:l.p.id, color:l.color, size:l.size, qty:l.qty}));
+      const r = await api('/pedidos', {method:'POST', body:JSON.stringify({cliente:{nombre:datos.nombre, celular:datos.celular, direccion:datos.direccion}, pago:datos.pago, items})});
+      return {codigo:r.codigo, total:r.total};
+    } catch (err) {
+      if (err.estado) throw err;   // el servidor respondió con un error (stock, datos...): se muestra al cliente
+      enLinea = false;             // el servidor no responde: seguimos sin él
+    }
+  }
+  return {codigo:'Z' + Date.now().toString().slice(-6), total:ls.reduce((s, l) => s + unit(l.p, l.size) * l.qty, 0)};
 }
 
 /* ---------- Inicio ---------- */
@@ -131,26 +193,35 @@ function carrito(done){
    <td><button class="sm" data-k="${esc(l.k)}" data-d="-1" aria-label="Quitar uno">−</button> ${l.qty} <button class="sm" data-k="${esc(l.k)}" data-d="1" aria-label="Agregar uno">+</button></td>
    <td>${money(unit(l.p, l.size) * l.qty)}</td><td><button class="sm danger" data-k="${esc(l.k)}" data-d="0">Quitar</button></td></tr>`).join('')}</table></div>
   <form class="box form" id="ck"><h3>Datos de entrega</h3>
-   <label>Nombre completo<input id="nm" required></label>
-   <label>Celular<input id="ph" type="tel" required></label>
-   <label>Dirección y ciudad<input id="ad" required></label>
+   <label>Nombre completo<input id="nm" autocomplete="name" required><small class="err" id="e-nm" role="alert" style="color:#b3261e"></small></label>
+   <label>Celular<input id="ph" type="tel" inputmode="numeric" autocomplete="tel" placeholder="912 345 678" required><small class="err" id="e-ph" role="alert" style="color:#b3261e"></small></label>
+   <label>Dirección y ciudad<input id="ad" autocomplete="street-address" required><small class="err" id="e-ad" role="alert" style="color:#b3261e"></small></label>
    <label>Forma de pago<select id="py"><option>Yape / Plin</option><option>Transferencia</option><option>Contra entrega</option></select></label>
    <p class="total"><span>Total</span><b>${money(total)}</b></p>
    <button class="btn dark">Enviar pedido por WhatsApp</button></form></div>`}</div></section>`;
   document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
     const it = cart.find(x => x.k === b.dataset.k), d = +b.dataset.d, p = products.find(x => x.id == it.id);
     if (d === 0) cart = cart.filter(x => x !== it);
-    else if (d > 0 && it.qty >= p.stock) return toast('Solo quedan ' + p.stock + ' unidades');
+    else if (d > 0 && enCarrito(p.id) >= p.stock) return toast(`Máximo ${p.stock} unidades de esta silla`);
     else { it.qty += d; if (it.qty < 1) cart = cart.filter(x => x !== it) }
     saveCart(); count(); carrito();
   });
-  if ($('#ck')) $('#ck').onsubmit = e => {
+  if ($('#ck')) $('#ck').onsubmit = async e => {
     e.preventDefault();
-    const code = 'Z' + Date.now().toString().slice(-6);
-    const items = ls.map(l => `${l.qty} x ${l.p.name} (${l.color}, ${l.size})`).join(', ');
-    const msg = `Hola ZENYS, soy ${$('#nm').value}. Pedido ${code}: ${items}. Total ${money(total)}. Pago: ${$('#py').value}. Dirección: ${$('#ad').value}. Cel: ${$('#ph').value}`;
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
-    cart = []; saveCart(); count(); carrito(code);
+    const datos = {nombre:$('#nm').value.trim(), celular:$('#ph').value, direccion:$('#ad').value.trim(), pago:$('#py').value};
+    const v = validar(datos), campo = {nombre:'nm', celular:'ph', direccion:'ad'};
+    ['nm', 'ph', 'ad'].forEach(id => $('#e-' + id).textContent = '');
+    const fallos = Object.keys(v.errores);
+    if (fallos.length) { fallos.forEach(k => $('#e-' + campo[k]).textContent = v.errores[k]); return $('#' + campo[fallos[0]]).focus() }
+    datos.celular = v.celular;
+    const btn = $('#ck button'); btn.disabled = true; btn.textContent = 'Enviando...';
+    try {
+      const r = await enviarPedido(datos, ls);
+      const items = ls.map(l => `${l.qty} x ${l.p.name} (${l.color}, ${l.size})`).join(', ');
+      const msg = `Hola ZENYS, soy ${datos.nombre}. Pedido ${r.codigo}: ${items}. Total ${money(r.total)}. Pago: ${datos.pago}. Dirección: ${datos.direccion}. Cel: ${datos.celular}`;
+      window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+      cart = []; saveCart(); count(); carrito(r.codigo);
+    } catch (err) { toast(err.message); sincronizar() }
   };
 }
 
@@ -161,4 +232,6 @@ function route(){
   scrollTo(0, 0); count();
 }
 addEventListener('hashchange', route);
+sanearCarrito();
 route();
+sincronizar();
