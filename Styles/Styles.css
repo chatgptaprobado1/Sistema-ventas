@@ -1,4 +1,4 @@
-:root{--abyss:#060a13;--cyan:#4fd8ff;--teal:#1f7f8e;--teal-d:#155863;--paper:#e8a2a2;--paper-d:#cdb482;--ink:#2a1d12;--red:#c8452d;
+:root{--abyss:#060a13;--cyan:#4fd8ff;--teal:#1f7f8e;--teal-d:#155863;--paper:#e8a2a2;--paper-d:#ff3c00;--ink:#2a1d12;--red:#c8452d;
 --serif:'Zen Antique',serif;--sans:'Zen Kaku Gothic New',system-ui,sans-serif}
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
