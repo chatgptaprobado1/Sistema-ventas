@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "name": "Zenyx Shadow Dragon",
+    "cat": "Dragón",
+    "price": 1590,
+    "stock": 6,
+    "colors": "Negro y morado:#2a1f3d,Gris grafito:#3a3a42"
+  },
+  {
+    "id": 2,
+    "name": "Zenyx Dragon Lord",
+    "cat": "Dragón",
+    "price": 1490,
+    "stock": 8,
+    "colors": "Negro:#1b1b22,Morado:#4a3a6b"
+  },
+  {
+    "id": 3,
+    "name": "Zenyx Naruto Uzumaki",
+    "cat": "Anime",
+    "price": 1450,
+    "stock": 7,
+    "colors": "Naranja y azul:#e07a2c,Azul marino:#2c5f9e"
+  },
+  {
+    "id": 4,
+    "name": "Zenyx Upper Moon",
+    "cat": "Anime",
+    "price": 1590,
+    "stock": 5,
+    "colors": "Negro y rojo:#1b1b22,Rojo sangre:#8a1c1c"
+  },
+  {
+    "id": 5,
+    "name": "Zenyx Light Yagami",
+    "cat": "Anime",
+    "price": 1490,
+    "stock": 6,
+    "colors": "Negro:#1b1b22,Rojo:#a3262a"
+  },
+  {
+    "id": 6,
+    "name": "Zenyx Ken Kaneki",
+    "cat": "Anime",
+    "price": 1490,
+    "stock": 4,
+    "colors": "Negro y blanco:#1b1b22,Blanco:#eeeeee"
+  },
+  {
+    "id": 7,
+    "name": "Zenyx Blue Lock",
+    "cat": "Anime",
+    "price": 1390,
+    "stock": 8,
+    "colors": "Azul y negro:#1c3f7a,Celeste:#4fa3d9"
+  },
+  {
+    "id": 8,
+    "name": "Zenyx Elite Class",
+    "cat": "Anime",
+    "price": 1390,
+    "stock": 6,
+    "colors": "Rojo vino:#6b1f2a,Blanco:#f1ece6"
+  }
+]
