@@ -1,4 +1,4 @@
-:root{--abyss:#060a13;--cyan:#4fd8ff;--teal:#1f7f8e;--teal-d:#155863;--paper:9aa0a6;--paper-d#7f858b;--ink:#2a1d12;--red:#c8452d;--serif:'Zen Antique',serif;--sans:'Zen Kaku Gothic New',system-ui,sans-serif}
+:root{--abyss:#060a13;--cyan:#4fd8ff;--teal:#1f7f8e;--teal-d:#155863;--paper:#ffffff;--paper-d:#f2f2f2;--ink:#2a1d12;--red:#c8452d;--serif:'Zen Antique',serif;--sans:'Zen Kaku Gothic New',system-ui,sans-serif}
 *{box-sizing:border-box;margin:0}html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--abyss);color:#e6f6fb;line-height:1.6}
 a{color:inherit;text-decoration:none}
