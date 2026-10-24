@@ -30,6 +30,10 @@ const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d }
 let cart = load('zenys-cart', []);
 const saveCart = () => { try { localStorage.setItem('zenys-cart', JSON.stringify(cart)) } catch {} };
 
+/* ---------- Favoritos (lista de deseos) ---------- */
+let favs = load('zenys-favs', []);
+const saveFavs = () => { try { localStorage.setItem('zenys-favs', JSON.stringify(favs)) } catch {} };
+
 const col = p => p.colors.split(',').map(x => x.split(':')).filter(a => a[1]).map(([n,h]) => ({n:n.trim(), h:h.trim()}));
 const chairSvg = p => `<svg role="img" aria-label="${esc(p.name)}" style="--a:${esc(col(p)[0].h)};--b:${esc((col(p)[1]||col(p)[0]).h)}"><use href="#chair"/></svg>`;
 const chairById = id => chairSvg(products.find(p => p.id == id));
@@ -42,7 +46,7 @@ const count = () => $('#count').textContent = cart.reduce((s, i) => s + i.qty, 0
 
 function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2000) }
 
-const card = p => `<article class="card">${p.stock < 1 ? '<span class="tag">Agotado</span>' : ''}
+const card = p => `<article class="card"><button class="fav" data-fav="${p.id}" aria-label="Marcar como favorita" style="position:absolute;top:8px;left:12px;z-index:2;background:none;border:0;font-size:1.7rem;line-height:1;cursor:pointer;color:#c8452d">${favs.includes(p.id) ? '♥' : '♡'}</button>${p.stock < 1 ? '<span class="tag">Agotado</span>' : ''}
   <a href="#/producto/${p.id}"><div class="art">${art(p)}</div><h3>${esc(p.name)}</h3></a>
   <p class="clan">${esc(p.serie)}</p><p class="price">${money(p.price)}</p>
   <a class="btn dark" href="#/producto/${p.id}">Ver y elegir</a></article>`;
@@ -135,7 +139,7 @@ function home(){
 
 /* ---------- Tienda con filtros ---------- */
 function tienda(){
-  const cats = ['Todas', ...new Set(products.map(p => p.cat))];
+  const cats = ['Todas', 'Favoritas', ...new Set(products.map(p => p.cat))];
   const top = Math.ceil(Math.max(...products.map(p => p.price), 500) / 100) * 100;
   let cat = 'Todas';
   $('#app').innerHTML = `<section class="paper page"><div class="wrap"><h2>Tienda</h2>
@@ -147,9 +151,9 @@ function tienda(){
   const draw = () => {
     const q = $('#q').value.toLowerCase(), mx = +$('#mx').value, so = $('#so').value;
     $('#mv').textContent = money(mx);
-    const r = products.filter(p => (cat === 'Todas' || p.cat === cat) && p.price <= mx && p.name.toLowerCase().includes(q));
+    const r = products.filter(p => (cat === 'Todas' || (cat === 'Favoritas' ? favs.includes(p.id) : p.cat === cat)) && p.price <= mx && p.name.toLowerCase().includes(q));
     if (so) r.sort((a, b) => so === 'a' ? a.price - b.price : b.price - a.price);
-    $('#list').innerHTML = r.length ? r.map(card).join('') : '<p>No hay sillas con esos filtros. Prueba ampliando el precio o cambiando la categoría.</p>';
+    $('#list').innerHTML = r.length ? r.map(card).join('') : (cat === 'Favoritas' ? '<p>Aún no marcaste favoritas. Toca el ♡ de una silla para guardarla aquí.</p>' : '<p>No hay sillas con esos filtros. Prueba ampliando el precio o cambiando la categoría.</p>');
   };
   ['q','so','mx'].forEach(i => $('#' + i).oninput = draw);
   document.querySelectorAll('.chip').forEach(b => b.onclick = () => { cat = b.dataset.cat; document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); draw() });
@@ -224,6 +228,22 @@ function carrito(done){
     } catch (err) { toast(err.message); sincronizar() }
   };
 }
+
+/* ---------- Clic en el corazón de favoritos ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-fav]'); if (!b) return;
+  const id = +b.dataset.fav;
+  favs = favs.includes(id) ? favs.filter(x => x !== id) : [...favs, id];
+  saveFavs();
+  const on = favs.includes(id);
+  b.textContent = on ? '♥' : '♡';
+  toast(on ? 'Agregada a favoritas' : 'Quitada de favoritas');
+  // si estás viendo solo "Favoritas", la tarjeta desaparece al quitarla
+  if (!on && $('#list') && document.querySelector('.chip.on')?.dataset.cat === 'Favoritas') {
+    b.closest('article').remove();
+    if (!$('#list .card')) $('#list').innerHTML = '<p>Aún no marcaste favoritas. Toca el ♡ de una silla para guardarla aquí.</p>';
+  }
+});
 
 /* ---------- Router ---------- */
 function route(){
