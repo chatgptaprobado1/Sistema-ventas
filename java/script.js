@@ -119,7 +119,7 @@ async function enviarPedido(datos, ls){
 /* ---------- Inicio ---------- */
 function home(){
   $('#app').innerHTML = `
-  <section class="hero"><div><h1>El trono de tu próxima batalla</h1>
+  <section class="hero"><div><h1>El trono de los fieles</h1>
     <p>Sillas gamer con ergonomía real y ediciones inspiradas en el anime. Diseñadas para sesiones largas, enviadas a todo el Perú.</p>
     <a class="btn" href="#/tienda">Ir a la tienda</a></div>
     <div class="hero-logo"><img src="${IMG}logo.png" alt="Logo de ZENYS"></div></section>
