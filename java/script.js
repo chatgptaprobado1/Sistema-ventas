@@ -36,7 +36,7 @@ const chairById = id => chairSvg(products.find(p => p.id == id));
 const art = (p, i = 0) => p.images[i]
   ? `<img src="${IMG}${esc(p.images[i])}" alt="${esc(p.name)}" loading="lazy" onerror="this.outerHTML=chairById(${p.id})">`
   : chairSvg(p);
-const unit = (p, size) => p.price + (size === 'XL' ? 100 : 0);
+const unit = (p, size) => p.price + (size === 'XL' ? 150 : 0);
 const lines = () => cart.map(i => ({...i, p: products.find(x => x.id == i.id)})).filter(l => l.p);
 const count = () => $('#count').textContent = cart.reduce((s, i) => s + i.qty, 0);
 
@@ -166,9 +166,9 @@ function producto(id){
   <div><h2>${esc(p.name)}</h2><p class="clan">${esc(p.serie)}</p><p class="price big" id="pr">${money(p.price)}</p><p>${esc(p.desc)}</p>
    <p class="lbl">Color: <b id="cn">${esc(color)}</b></p>
    <div>${cs.map((c, i) => `<button class="sw${i ? '' : ' on'}" data-c="${esc(c.n)}" style="--c:${esc(c.h)}" aria-label="${esc(c.n)}"></button>`).join('')}</div>
-   <div class="row2"><label>Tamaño<select id="sz"><option>Estándar</option><option value="XL">XL (+S/ 100)</option></select></label>
+   <div class="row2"><label>Tamaño<select id="sz"><option>Estándar</option><option value="XL">XL (+S/ 150)</option></select></label>
    <label>Cantidad<input id="qt" type="number" min="1" value="1"></label></div>
-   <p class="hint">${p.stock > 0 ? p.stock + ' disponibles' : 'Agotado por ahora'}</p>
+   <p class="hint">${p.stock < 1 ? 'Agotado por ahora' : p.stock <= 5 ? '¡Solo quedan ' + p.stock + ' unidades!' : p.stock + ' disponibles'}</p>
    <div class="acts"><button class="btn dark" id="add" ${p.stock < 1 ? 'disabled' : ''}>Agregar al carrito</button>
    <button class="btn" id="buy" ${p.stock < 1 ? 'disabled' : ''}>Comprar ahora</button></div></div></div></div></section>`;
   document.querySelectorAll('.sw').forEach(b => b.onclick = () => { color = b.dataset.c; $('#cn').textContent = color; document.querySelectorAll('.sw').forEach(x => x.classList.toggle('on', x === b)) });
